@@ -88,7 +88,7 @@ graph TD
     RX -- "Downloads Payload\n(AT+IMTRB)" --> UART
     RX -- "Saves as .txt or .bin" --> Inbox
     RX -- "Acknowledge Deletion\n(AT+IMTA)" --> UART
-
+```
 
 
 
