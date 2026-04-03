@@ -33,6 +33,7 @@ graph TD
     RX -- &quot;Acknowledge Deletion\n(AT+IMTA)&quot; --&gt; UART
 --------
 
+```mermaid
 graph TD
     %% Define Styles
     classDef dir fill:#f9f2f4,stroke:#d04464,stroke-width:2px,color:#333;
