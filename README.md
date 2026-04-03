@@ -23,16 +23,6 @@ This is the core orchestrator that applies your business logic to the raw files 
 * **Transmission Routing:** It reads the contents of the files to sniff for null bytes; if found, it dynamically routes the file through the modem's binary protocol, otherwise, it defaults to the text protocol.
 * **Inbox Checking:** After transmitting, it polls the modem for incoming messages (`AT+IMTMTS`), downloads any pending payloads, and attempts to decode them as UTF-8 text before saving them to the `inbox` directory.
 
-------------
-graph TD
-    %% Define Styles
-    classDef dir fill:#f9f2f4,stroke:#d04464,stroke-width:2px,color:#333;
-    
-    %% 
-
-    RX -- &quot;Acknowledge Deletion\n(AT+IMTA)&quot; --&gt; UART
---------
-
 ```mermaid
 graph TD
     %% Define Styles
