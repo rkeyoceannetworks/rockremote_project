@@ -23,6 +23,64 @@ This is the core orchestrator that applies your business logic to the raw files 
 * **Transmission Routing:** It reads the contents of the files to sniff for null bytes; if found, it dynamically routes the file through the modem's binary protocol, otherwise, it defaults to the text protocol.
 * **Inbox Checking:** After transmitting, it polls the modem for incoming messages (`AT+IMTMTS`), downloads any pending payloads, and attempts to decode them as UTF-8 text before saving them to the `inbox` directory.
 
+
+
+graph TD
+    %% Define Styles
+    classDef dir fill:#f9f2f4,stroke:#d04464,stroke-width:2px,color:#333;
+    classDef logic fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#333;
+    classDef hardware fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#333;
+    classDef app fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#333;
+
+    %% Components
+    subgraph Edge_Environment [Edge Applications]
+        App[Data Generators / Sensors]:::app
+    end
+
+    subgraph File_System [Local Directories]
+        Outbox[(outbox/)]:::dir
+        Unsent[(unsent/)]:::dir
+        Sent[(sent/)]:::dir
+        Inbox[(inbox/)]:::dir
+    end
+
+    subgraph Sync_Orchestrator [mailbox_sync.py Orchestrator]
+        Parse[Parse Naming & mtime]:::logic
+        Prune{Prune Volatile .v}:::logic
+        Sort[Sort Queue by Priority]:::logic
+        Sniff{Sniff Payload}:::logic
+        RX[Poll Incoming MT Queue]:::logic
+    end
+
+    subgraph Modem_Interface [modem.py / RockRemoteIMT]
+        UART((Serial /dev/ttyS1)):::hardware
+    end
+
+    %% PHASE 0: Data Generation
+    App -- Drops raw data,\nlogs, and telemetry --> Outbox
+
+    %% PHASE 1: Transmitting
+    Outbox -- Reads pending queue --> Parse
+    Parse --> Prune
+    Prune -- "Moves stale files\n(older duplicates)" --> Unsent
+    Prune -- "Keeps active files" --> Sort
+    Sort -- "Selects top 5 files" --> Sniff
+    
+    Sniff -- "Binary File\n(contains null bytes)" --> TX_Bin[AT+IMTWU]:::logic
+    Sniff -- "Text File\n(UTF-8 ASCII)" --> TX_Text[AT+IMTWT]:::logic
+    
+    TX_Bin --> UART
+    TX_Text --> UART
+    
+    UART -- "TX Success" --> Sent
+
+    %% PHASE 2: Receiving
+    UART -. "AT+IMTMTS" .-> RX
+    RX -- "Downloads Payload\n(AT+IMTRB)" --> UART
+    RX -- "Saves as .txt or .bin" --> Inbox
+    RX -- "Acknowledge Deletion\n(AT+IMTA)" --> UART
+
+
 #############
 Accidental old stuf from other project
 
